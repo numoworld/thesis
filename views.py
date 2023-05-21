@@ -5,23 +5,28 @@ import cv2
 
 from models import Camera
 from handtracking import HandTracker, CONTROLS_ALIASES
-
+from midi_sender import MidiSender
 
 class UI_Window(QWidget):
 
-    def __init__(self, camera: Camera = None, hand_tracker: HandTracker = None):
+    def __init__(self, camera: Camera = None, hand_tracker: HandTracker = None, midi_sender: MidiSender = None):
         super().__init__()
         self.camera = camera
         self.hand_tracker = hand_tracker
-        print('UI')
+        self.midi_sender = midi_sender
+
+        self.positions = [-1, -1, -1, -1, -1]
+
+        self.switch_activated = False
+
         # Create a timer.
         self.timer = QTimer()
         self.timer.timeout.connect(self.nextFrameSlot)
 
+        # Create a layout.
         layout = QHBoxLayout()
 
-        # Create a layout.
-        camera_layout = QVBoxLayout()
+        camera_layout = QVBoxLayout() # TODO: perenesti
 
         # # Add buttons # TODO: Delete
         # button_layout = QHBoxLayout()
@@ -35,7 +40,7 @@ class UI_Window(QWidget):
 
         # button_layout.addWidget(self.start_button)
         # button_layout.addWidget(self.stop_button)
-    
+
         # camera_layout.addLayout(button_layout)
 
         # Add a label
@@ -71,7 +76,7 @@ class UI_Window(QWidget):
             msgBox.setText("Failed to open camera.")
             msgBox.exec()
             return
-        self.timer.start(1000. / 24)
+        self.timer.start(1000 // 24)
 
     def stop(self):
         self.timer.stop()
@@ -80,11 +85,8 @@ class UI_Window(QWidget):
 
         self._hide_button(self.stop_button)
         self._show_button(self.start_button)
-        # self.stop_button.setEnabled(False)
-        # self.stop_button.hide()
-        # self.start_button.setEnabled(True)
-        # self.start_button.show()
-        
+
+
     def calibrate(self, low=True):
         self.hand_tracker.calibrate(self.camera.read(), low)
         if self.hand_tracker.calibrated_low and self.hand_tracker.calibrated_high:
@@ -96,24 +98,28 @@ class UI_Window(QWidget):
         self.hand_tracker.recalibrate()
         self.recalibrate_button.setDisabled(True)
         for label in self.pos_labels:
-            label.setDisabled(True)  
-            label.setNum(-1)      
+            label.setDisabled(True)
+            label.setNum(-1)
 
     def update_positions(self, frame):
         if self.hand_tracker.calibrated_low and self.hand_tracker.calibrated_high:
-            positions = self.hand_tracker.get_finger_positions(frame)
-            for i in range(len(positions)):
-                self.pos_labels[i].setNum(positions[i])
+            self.positions = self.hand_tracker.get_finger_positions(frame)
+            for i in range(len(self.positions)):
+                self.pos_labels[i].setNum(self.positions[i])
 
 
     def _convert_frame_to_rgb(self, frame):
-        return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) 
+        return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
 
     def nextFrameSlot(self):
         frame = self.camera.read()
         self.update_positions(frame)
         frame = self.hand_tracker.draw_calibrated_positions(frame)
+        self.set_switch()
+        if self.switch_activated:
+            for i in range(1, 5):
+                self.midi_sender.control_change(i, self.positions[i])
         frame = self._convert_frame_to_rgb(frame)
         #frame = self.camera.read_gray()
         if frame is not None:
@@ -121,9 +127,17 @@ class UI_Window(QWidget):
             pixmap = QPixmap.fromImage(image)
             self.label.setPixmap(pixmap)
 
+
     def update_threshold_value(self):
         self.detection_threshold = self.threshold_slider.value() / 100
         self.threshold_val.setNum(self.threshold_slider.value() / 100)
+
+
+    def set_switch(self):
+        if self.positions[0] >= self.threshold_slider.value() / 100:
+            self.switch_activated = True
+        else:
+            self.switch_activated = False
 
 
     def _setup_settings_layout(self):
@@ -149,12 +163,12 @@ class UI_Window(QWidget):
         calibrate_button_layout = QHBoxLayout()
 
         self.calibrate_low_button = QPushButton("Calibrate rest position")
-        self.calibrate_low_button.clicked.connect(lambda: self.calibrate(low=True))  
+        self.calibrate_low_button.clicked.connect(lambda: self.calibrate(low=True))
         self.calibrate_high_button = QPushButton("Calibrate up position")
-        self.calibrate_high_button.clicked.connect(lambda: self.calibrate(low=False))  
+        self.calibrate_high_button.clicked.connect(lambda: self.calibrate(low=False))
         self.recalibrate_button = QPushButton('Recalibrate')
         self.recalibrate_button.setDisabled(True)
-        self.recalibrate_button.clicked.connect(self.recalibrate) 
+        self.recalibrate_button.clicked.connect(self.recalibrate)
 
         calibrate_button_layout.addWidget(self.calibrate_low_button)
         calibrate_button_layout.addWidget(self.calibrate_high_button)
@@ -207,6 +221,27 @@ class UI_Window(QWidget):
 
         layout.addLayout(threshold_layout)
 
+        # binding buttons layouts
+        bind_controls_label = QLabel()
+        bind_controls_label.setText('Bind controls:')
+        binding_buttons_layout = QHBoxLayout()
+
+        buttons = []
+        for i in range(1, 5):
+            button = QPushButton()
+            button.setText('C' + str(i))
+            buttons.append(button)
+            binding_buttons_layout.addWidget(button)
+
+        buttons[0].clicked.connect(lambda: self.midi_sender.bind_control(1))
+        buttons[1].clicked.connect(lambda: self.midi_sender.bind_control(2))
+        buttons[2].clicked.connect(lambda: self.midi_sender.bind_control(3))
+        buttons[3].clicked.connect(lambda: self.midi_sender.bind_control(4))
+
+
+
+        layout.addWidget(bind_controls_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addLayout(binding_buttons_layout)
 
         return layout
 
@@ -218,8 +253,8 @@ class UI_Window(QWidget):
     def _show_button(self, button):
         button.setEnabled(True)
         button.show()
-    
-    
+
+
 
 
 class MovieThread(QThread):
