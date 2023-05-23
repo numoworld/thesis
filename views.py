@@ -71,7 +71,6 @@ class UI_Window(QWidget):
         self._hide_button(self.stop_button)
         self._show_button(self.start_button)
 
-
     def calibrate(self, low=True):
         self.hand_tracker.calibrate(self.camera.read(), low)
         if self.hand_tracker.calibrated_low and self.hand_tracker.calibrated_high:
@@ -92,11 +91,6 @@ class UI_Window(QWidget):
             for i in range(len(self.positions)):
                 self.pos_labels[i].setNum(self.positions[i])
 
-
-    def _convert_frame_to_rgb(self, frame):
-        return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-
     def nextFrameSlot(self):
         frame = self.camera.read()
         self.update_positions(frame)
@@ -112,22 +106,35 @@ class UI_Window(QWidget):
             pixmap = QPixmap.fromImage(image)
             self.label.setPixmap(pixmap)
 
-
-    def update_threshold_value(self):
-        self.detection_threshold = self.threshold_slider.value() / 100
-        self.threshold_val.setNum(self.threshold_slider.value() / 100)
-
-
-    def _set_switch(self):
-        if self.positions[0] >= self.threshold_slider.value() / 100:
-            self.switch_activated = True
-        else:
-            self.switch_activated = False
-
+    def _convert_frame_to_rgb(self, frame):
+        return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
     def _setup_settings_layout(self):
         layout = QVBoxLayout()
 
+        # # open and close camera buttons
+        camera_button_layout = self._create_open_camera_button_layout()
+        layout.addLayout(camera_button_layout)
+
+        # calibrate and recalibrate buttons
+        calibrate_button_layout = self._create_calibration_buttons_layout()
+        layout.addLayout(calibrate_button_layout)
+
+        # create positions info layout
+        positions_info_layout = self._create_positions_info_layout()
+        layout.addLayout(positions_info_layout)
+
+        # threshold for detecting edit mode buttons
+        threshold_layout = self._create_threshold_layout()
+        layout.addLayout(threshold_layout)
+
+        # binding buttons layouts
+        binding_buttons_layout = self._create_binding_buttons_layout()
+        layout.addLayout(binding_buttons_layout)
+
+        return layout
+
+    def _create_open_camera_button_layout(self):
         # open and close camera buttons
         camera_button_layout = QHBoxLayout()
 
@@ -142,9 +149,9 @@ class UI_Window(QWidget):
         camera_button_layout.addWidget(self.start_button)
         camera_button_layout.addWidget(self.stop_button)
 
-        layout.addLayout(camera_button_layout)
+        return camera_button_layout
 
-        # calibrate and recalibrate buttons
+    def _create_calibration_buttons_layout(self):
         calibrate_button_layout = QHBoxLayout()
 
         self.calibrate_low_button = QPushButton("Calibrate rest position")
@@ -159,9 +166,9 @@ class UI_Window(QWidget):
         calibrate_button_layout.addWidget(self.calibrate_high_button)
         calibrate_button_layout.addWidget(self.recalibrate_button)
 
-        layout.addLayout(calibrate_button_layout)
+        return calibrate_button_layout
 
-        # create positions info layout
+    def _create_positions_info_layout(self):
         positions_info_layout = QGridLayout()
         positions_info_layout.setContentsMargins(0,0,0,0)
         positions_info_layout.setSpacing(0)
@@ -178,10 +185,13 @@ class UI_Window(QWidget):
             positions_info_layout.addWidget(label_pos, 1, i)
 
         positions_info_layout.setRowStretch(2,0)
-        layout.addLayout(positions_info_layout)
 
-        # threshold for detecting edit mode buttons
+        return positions_info_layout
+
+    def _create_threshold_layout(self):
         threshold_layout = QGridLayout()
+        # threshold_layout.setContentsMargins(0,0,0,0)
+        # threshold_layout.setSpacing(0)
 
         threshold_layout.addWidget(QLabel("Activate threshold value:"), 0, 0)
 
@@ -190,7 +200,7 @@ class UI_Window(QWidget):
         self.threshold_slider.setSliderPosition(60)
         self.threshold_slider.setDisabled(False)
         self.threshold_slider.setTickInterval(5)
-        self.threshold_slider.valueChanged.connect(self.update_threshold_value)
+        self.threshold_slider.valueChanged.connect(self._update_threshold_value)
 
 
         self.threshold_val = QLabel()
@@ -199,37 +209,44 @@ class UI_Window(QWidget):
         threshold_layout.addWidget(self.threshold_val, 1, 0)
         threshold_layout.addWidget(self.threshold_slider, 1, 1)
 
-        positions_info_layout.setContentsMargins(0,0,0,0)
-        positions_info_layout.setSpacing(0)
+        threshold_layout.setRowStretch(2,0)
 
-        threshold_layout.setRowStretch(2,1)
+        return threshold_layout
 
-        layout.addLayout(threshold_layout)
-
-        # binding buttons layouts
+    def _create_binding_buttons_layout(self):
+        layout = QGridLayout()
         bind_controls_label = QLabel()
         bind_controls_label.setText('Bind controls:')
-        binding_buttons_layout = QHBoxLayout()
+        layout.addWidget(bind_controls_label, 0, 0)
 
         buttons = []
         for i in range(1, 5):
             button = QPushButton()
             button.setText('C' + str(i))
             buttons.append(button)
-            binding_buttons_layout.addWidget(button)
+            layout.addWidget(button, 1, i-1)
 
         buttons[0].clicked.connect(lambda: self.midi_sender.bind_control(1))
         buttons[1].clicked.connect(lambda: self.midi_sender.bind_control(2))
         buttons[2].clicked.connect(lambda: self.midi_sender.bind_control(3))
         buttons[3].clicked.connect(lambda: self.midi_sender.bind_control(4))
 
-
-
-        layout.addWidget(bind_controls_label, alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addLayout(binding_buttons_layout)
+        layout.setRowStretch(2,1)
 
         return layout
 
+    def _setup_layout(self):
+        pass #TODO: move all UI initialization there
+
+    def _update_threshold_value(self):
+        self.detection_threshold = self.threshold_slider.value() / 100
+        self.threshold_val.setNum(self.threshold_slider.value() / 100)
+
+    def _set_switch(self):
+        if self.positions[0] >= self.threshold_slider.value() / 100:
+            self.switch_activated = True
+        else:
+            self.switch_activated = False
 
     def _hide_button(self, button):
         button.setEnabled(False)
