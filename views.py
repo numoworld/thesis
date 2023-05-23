@@ -28,21 +28,6 @@ class UI_Window(QWidget):
 
         camera_layout = QVBoxLayout() # TODO: perenesti
 
-        # # Add buttons # TODO: Delete
-        # button_layout = QHBoxLayout()
-
-        # self.start_button = QPushButton("Open camera")
-        # self.start_button.clicked.connect(self.start)
-
-        # self.stop_button = QPushButton("Close Camera")
-        # self.stop_button.clicked.connect(self.stop)
-        # self.stop_button.hide()
-
-        # button_layout.addWidget(self.start_button)
-        # button_layout.addWidget(self.stop_button)
-
-        # camera_layout.addLayout(button_layout)
-
         # Add a label
         self.label = QLabel()
         self.label.setFixedSize(640, 640)
@@ -116,7 +101,7 @@ class UI_Window(QWidget):
         frame = self.camera.read()
         self.update_positions(frame)
         frame = self.hand_tracker.draw_calibrated_positions(frame)
-        self.set_switch()
+        self._set_switch()
         if self.switch_activated:
             for i in range(1, 5):
                 self.midi_sender.control_change(i, self.positions[i])
@@ -133,7 +118,7 @@ class UI_Window(QWidget):
         self.threshold_val.setNum(self.threshold_slider.value() / 100)
 
 
-    def set_switch(self):
+    def _set_switch(self):
         if self.positions[0] >= self.threshold_slider.value() / 100:
             self.switch_activated = True
         else:
