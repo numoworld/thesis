@@ -23,21 +23,8 @@ class UI_Window(QWidget):
         self.timer = QTimer()
         self.timer.timeout.connect(self.nextFrameSlot)
 
-        # Create a layout.
-        layout = QHBoxLayout()
-
-        camera_layout = QVBoxLayout() # TODO: perenesti
-
-        # Add a label
-        self.label = QLabel()
-        self.label.setFixedSize(640, 640)
-
-        camera_layout.addWidget(self.label)
-
-        settings_layout = self._setup_settings_layout()
-
-        layout.addLayout(camera_layout)
-        layout.addLayout(settings_layout)
+        # setup layout
+        layout = self._setup_layout()
 
         # Set the layout
         self.setLayout(layout)
@@ -45,14 +32,8 @@ class UI_Window(QWidget):
         # self.setFixedSize(900, 900)
 
     def start(self):
-        # self.start_button.setEnabled(False)
-        # self.start_button.hide()
-        # self.stop_button.show()
-        # self.stop_button.setEnabled(True)
-
         self._hide_button(self.start_button)
         self._show_button(self.stop_button)
-
 
         self.label.setText('Opening...')
         if not self.camera.open():
@@ -108,6 +89,29 @@ class UI_Window(QWidget):
 
     def _convert_frame_to_rgb(self, frame):
         return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    def _setup_layout(self):
+        layout = QHBoxLayout()
+
+        camera_layout = self._create_camera_layout()
+        settings_layout = self._setup_settings_layout()
+
+        layout.addLayout(camera_layout)
+        layout.addLayout(settings_layout)
+
+        return layout
+
+    def _create_camera_layout(self):
+
+        camera_layout = QVBoxLayout() # TODO: perenesti
+
+        # Add a label
+        self.label = QLabel()
+        self.label.setFixedSize(640, 640)
+
+        camera_layout.addWidget(self.label)
+
+        return camera_layout
 
     def _setup_settings_layout(self):
         layout = QVBoxLayout()
@@ -234,9 +238,6 @@ class UI_Window(QWidget):
         layout.setRowStretch(2,1)
 
         return layout
-
-    def _setup_layout(self):
-        pass #TODO: move all UI initialization there
 
     def _update_threshold_value(self):
         self.detection_threshold = self.threshold_slider.value() / 100
