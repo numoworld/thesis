@@ -28,7 +28,7 @@ class UI_Window(QWidget):
 
         # Set the layout
         self.setLayout(layout)
-        self.setWindowTitle("First GUI with QT")
+        self.setWindowTitle("Controller")
         # self.setFixedSize(900, 900)
 
     def start(self):
