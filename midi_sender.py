@@ -7,7 +7,6 @@ class MidiSender:
         self.midiout = rtmidi.MidiOut()
         self.midiout.open_port(1)
 
-
     def bind_control(self, control_id):
         self.control_change(control_id, 0)
 

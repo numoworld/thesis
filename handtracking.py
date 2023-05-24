@@ -7,6 +7,7 @@ CONTROLS_ALIASES = ['SWITCH', 'C1', 'C2', 'C3', 'C4']
 
 
 class HandTracker:
+
     def __init__(self):
         self.calibrated_low = False
         self.calibrated_high = False
@@ -17,7 +18,6 @@ class HandTracker:
         self.mp_draw = mp.solutions.drawing_utils
 
         self.hands = self.mp_hands.Hands()
-
 
     def _get_landmarks(self, frame):
         mp_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -35,22 +35,21 @@ class HandTracker:
         landmarks = mhl.landmark
         self.positions[('low' if low else 'high')] = [landmarks[i].y for i in CONTROLS_IDS]
         self.positions_xs[('low' if low else 'high')] = [landmarks[i].x for i in CONTROLS_IDS]
-        self.calibrated_low = True
         self.__setattr__(('calibrated_low' if low else 'calibrated_high'), True)
         return True
 
     def get_finger_positions(self, frame):
         if  not (self.calibrated_high and self.calibrated_low):
             return [-1, -1, -1, -1, -1]
-        
+
         landmarks = self._get_landmarks(frame)
         if not landmarks:
             return [-1, -1, -1, -1, -1]
-        
+
         lm = landmarks.landmark
-        positions = [np.clip((lm[i].y - self.positions['low'][j]) / (self.positions['high'][j] - self.positions['low'][j]), 0, 1) for i, j in zip(CONTROLS_IDS, range(5))] 
+        positions = [np.clip((lm[i].y - self.positions['low'][j]) / (self.positions['high'][j] - self.positions['low'][j]), 0, 1) for i, j in zip(CONTROLS_IDS, range(5))]
         return positions
-    
+
     def recalibrate(self):
         self.calibrated_high = self.calibrated_low = False
 
@@ -71,4 +70,4 @@ class HandTracker:
 
 
 
-    
+
