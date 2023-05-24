@@ -4,7 +4,6 @@ class Camera:
 
     def __init__(self, camera):
         self.camera = camera
-        self.vp = None
 
     def open(self, width=640, height=480, fps=24):
         self.vc = cv2.VideoCapture(self.camera)
@@ -18,23 +17,12 @@ class Camera:
 
         return self.vc.isOpened()
 
-    def read(self, negative=False):
-        rval, frame = self.vc.read()
-        if frame is not None:
-            frame = cv2.flip(frame, 1)
-            if negative:
-                frame = cv2.bitwise_not(frame)
-            return frame
-
-    def read_gray(self, negative=False):            
-        rval, frame = self.vc.read()
-        if frame is not None:
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB) 
-            if negative:
-                frame = cv2.bitwise_not(frame)
-            return frame
-        
     def close(self):
         if self.vc:
             self.vc.release()
+
+    def read(self):
+        rval, frame = self.vc.read()
+        if frame is not None:
+            frame = cv2.flip(frame, 1)
+            return frame
