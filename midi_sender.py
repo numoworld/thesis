@@ -11,5 +11,4 @@ class MidiSender:
         self.control_change(control_id, 0)
 
     def control_change(self, control_id, value):
-        print(control_id, value*127)
         self.midiout.send_message([CONTROL_CHANGE, control_id, value*127])
