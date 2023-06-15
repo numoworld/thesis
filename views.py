@@ -1,11 +1,13 @@
-from PyQt6.QtCore import QThread, QTimer, Qt
+import cv2
+
+from PyQt6.QtCore import QTimer, Qt
 from PyQt6.QtWidgets import QLabel, QWidget, QPushButton, QVBoxLayout, QApplication, QHBoxLayout, QMessageBox, QGridLayout, QSlider
 from PyQt6.QtGui import QPixmap, QImage
-import cv2
 
 from models import Camera
 from handtracking import HandTracker, CONTROLS_ALIASES
 from midi_sender import MidiSender
+
 
 class UI_Window(QWidget):
 
@@ -29,7 +31,6 @@ class UI_Window(QWidget):
         # Set the layout
         self.setLayout(layout)
         self.setWindowTitle("Controller")
-        # self.setFixedSize(900, 900)
 
     def nextFrameSlot(self):
         frame = self.camera.read()
@@ -103,7 +104,7 @@ class UI_Window(QWidget):
 
     def _create_camera_layout(self):
 
-        camera_layout = QVBoxLayout() # TODO: perenesti
+        camera_layout = QVBoxLayout()
 
         # Add a label
         self.label = QLabel()
