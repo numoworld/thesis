@@ -202,7 +202,6 @@ class UI_Window(QWidget):
         self.threshold_slider.setRange(0, 100)
         self.threshold_slider.setSliderPosition(60)
         self.threshold_slider.setDisabled(False)
-        self.threshold_slider.setTickInterval(5)
         self.threshold_slider.valueChanged.connect(self._update_threshold_value)
 
 
