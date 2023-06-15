@@ -195,10 +195,8 @@ class UI_Window(QWidget):
 
     def _create_threshold_layout(self):
         threshold_layout = QGridLayout()
-        # threshold_layout.setContentsMargins(0,0,0,0)
-        # threshold_layout.setSpacing(0)
 
-        threshold_layout.addWidget(QLabel("Activate threshold value:"), 0, 0)
+        threshold_layout.addWidget(QLabel("Activation threshold value:"), 0, 0)
 
         self.threshold_slider = QSlider(Qt.Orientation.Horizontal, self)
         self.threshold_slider.setRange(0, 100)
