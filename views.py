@@ -34,14 +34,16 @@ class UI_Window(QWidget):
 
     def nextFrameSlot(self):
         frame = self.camera.read()
+
         self.update_positions(frame)
+
         frame = self.hand_tracker.draw_calibrated_positions(frame)
+
         self._set_switch()
         if self.switch_activated:
             for i in range(1, 5):
                 self.midi_sender.control_change(i, self.positions[i])
         frame = self._convert_frame_to_rgb(frame)
-        #frame = self.camera.read_gray()
         if frame is not None:
             image = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format.Format_RGB888)
             pixmap = QPixmap.fromImage(image)
@@ -242,7 +244,7 @@ class UI_Window(QWidget):
         self.threshold_val.setNum(self.threshold_slider.value() / 100)
 
     def _set_switch(self):
-        if self.positions[0] >= self.threshold_slider.value() / 100:
+        if self.positions[0] >= self.detection_threshold:
             self.switch_activated = True
         else:
             self.switch_activated = False
@@ -254,15 +256,6 @@ class UI_Window(QWidget):
     def _show_button(self, button):
         button.setEnabled(True)
         button.show()
-
-
-# class MovieThread(QThread):
-#     def __init__(self, camera):
-#         super().__init__()
-#         self.camera = camera
-
-#     def run(self):
-#         self.camera.acquire_movie(200)
 
 
 if __name__ == '__main__':

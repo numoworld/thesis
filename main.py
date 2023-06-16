@@ -6,7 +6,7 @@ from midi_sender import MidiSender
 
 if __name__ == '__main__':
 
-    camera = Camera(0)
+    camera = Camera(1)
     hand_tracker = HandTracker()
     midi_sender = MidiSender(1)
 
